@@ -303,9 +303,7 @@ def profile():
         Booking.check_in < datetime.utcnow()
     ).order_by(Booking.check_in.desc()).all()
     
-    return render_template('profile.html', 
-                         upcoming_bookings=upcoming_bookings, 
-                         past_bookings=past_bookings)
+    return render_template('profile.html', upcoming_bookings=upcoming_bookings, past_bookings=past_bookings)
 
 @app.route('/hotel/<int:hotel_id>')
 def hotel_details(hotel_id):
@@ -383,11 +381,11 @@ def admin_dashboard():
     recent_bookings = Booking.query.order_by(Booking.created_at.desc()).limit(5).all()
     
     return render_template('admin/dashboard.html',
-                         hotels_count=hotels_count,
-                         bookings_count=bookings_count,
-                         users_count=users_count,
-                         revenue=revenue,
-                         recent_bookings=recent_bookings)
+                        hotels_count=hotels_count,
+                        bookings_count=bookings_count,
+                        users_count=users_count,
+                        revenue=revenue,
+                        recent_bookings=recent_bookings)
 
 def init_db():
     """Initialize the database with some sample data"""

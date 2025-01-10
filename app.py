@@ -16,7 +16,7 @@ import enum
 from sqlalchemy import extract, create_engine, text
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-import pymysql
+
 from urllib.parse import quote_plus
 
 # Load environment variables
