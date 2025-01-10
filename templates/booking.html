@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Book Room - {{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Book Room at {{ hotel.name }}</h3>
+                    <form method="POST" id="bookingForm">
+                        {{ form.csrf_token }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Check-in Date*</label>
+                                <input type="date" name="check_in" class="form-control" required
+                                       min="{{ min_date }}" max="{{ max_date }}" 
+                                       value="{{ session.get('check_in', '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Check-out Date*</label>
+                                <input type="date" name="check_out" class="form-control" required
+                                       min="{{ min_date }}" 
+                                       value="{{ session.get('check_out', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Room Type</label>
+                                <input type="text" class="form-control" value="{{ room.type|title }}" readonly>
+                                <input type="hidden" name="room_type" value="{{ room.type }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Number of Guests*</label>
+                                <input type="number" name="num_guests" class="form-control" required
+                                       min="1" max="{{ room.capacity }}" value="1">
+                                <small class="text-muted">Maximum capacity: {{ room.capacity }} guests</small>
+                            </div>
+                        </div>
+
+                        <div id="priceBreakdown" class="card mb-4 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Price Breakdown</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-2">Base Price: <span id="basePrice" class="fw-bold">£{{ "%.2f"|format(room.base_price) }}</span>/night</p>
+                                        <p class="mb-2">Number of Nights: <span id="numNights" class="fw-bold">0</span></p>
+                                        <p class="mb-2">Season: <span id="seasonType" class="fw-bold">Regular</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-2">Subtotal: <span id="subtotal" class="fw-bold">£0</span></p>
+                                        <p class="mb-2">Tax (20%): <span id="tax" class="fw-bold">£0</span></p>
+                                        <p class="mb-2 fs-5">Total Price: <span id="totalPrice" class="fw-bold text-primary">£0</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-credit-card"></i> Proceed to Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Room Information</h5>
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2">{{ room.type|title }} Room</h6>
+                        <p>{{ room.description }}</p>
+                    </div>
+                    
+                    <h6 class="mt-4">Room Features</h6>
+                    <ul class="list-unstyled">
+                        {% for amenity in room.amenities %}
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ amenity }}</li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <h6 class="mt-4">Hotel Information</h6>
+                    <p><i class="bi bi-geo-alt-fill"></i> {{ hotel.address }}, {{ hotel.city }}</p>
+                    <p><i class="bi bi-star-fill text-warning"></i> {{ "%.1f"|format(hotel.rating) }} / 5.0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const checkIn = document.querySelector('input[name="check_in"]');
+    const checkOut = document.querySelector('input[name="check_out"]');
+    const numGuests = document.querySelector('input[name="num_guests"]');
+    const basePrice = {{ room.base_price }};
+    const peakPrice = {{ room.peak_price or room.base_price }};
+    
+    function calculatePrice() {
+        if (checkIn.value && checkOut.value) {
+            const start = new Date(checkIn.value);
+            const end = new Date(checkOut.value);
+            const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            
+            if (nights > 0) {
+                const month = start.getMonth() + 1;
+                const isPeakSeason = (month >= 4 && month <= 8) || (month >= 11);
+                const price = isPeakSeason ? peakPrice : basePrice;
+                
+                const subtotal = price * nights;
+                const tax = subtotal * 0.20;
+                const total = subtotal + tax;
+                
+                document.getElementById('numNights').textContent = nights;
+                document.getElementById('seasonType').textContent = isPeakSeason ? 'Peak Season' : 'Off-Peak Season';
+                document.getElementById('subtotal').textContent = `£${subtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `£${tax.toFixed(2)}`;
+                document.getElementById('totalPrice').textContent = `£${total.toFixed(2)}`;
+            }
+        }
+    }
+
+    // Event listeners
+    checkIn.addEventListener('change', calculatePrice);
+    checkOut.addEventListener('change', calculatePrice);
+    
+    // Calculate initial price if dates are pre-filled
+    if (checkIn.value && checkOut.value) {
+        calculatePrice();
+    }
+    
+    // Ensure check-out date is after check-in date
+    checkIn.addEventListener('change', function() {
+        checkOut.min = this.value;
+        if (checkOut.value && checkOut.value < this.value) {
+            checkOut.value = this.value;
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<style>
+    .card {
+        border: none;
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        padding: 12px 24px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Reports</h1>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+                <span class="input-group-text">Date Range</span>
+                <input type="text" class="form-control" id="date-range" name="date-range">
+            </div>
+            <button type="button" class="btn btn-primary" id="generate-report">
+                <i class="fas fa-sync"></i> Generate Report
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="exportDropdown" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item export-btn" href="#" data-format="csv">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item export-btn" href="#" data-format="excel">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item export-btn" href="#" data-format="pdf">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Types -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Sales</h5>
+                    <p class="card-text">View monthly revenue and booking trends</p>
+                    <button type="button" class="btn btn-primary report-btn" data-type="monthly">
+                        View Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Sales by Hotel</h5>
+                    <p class="card-text">Compare revenue across different hotels</p>
+                    <button type="button" class="btn btn-primary report-btn" data-type="hotel">
+                        View Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Top Customers</h5>
+                    <p class="card-text">View most valuable customers by revenue</p>
+                    <button type="button" class="btn btn-primary report-btn" data-type="customers">
+                        View Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Room Occupancy</h5>
+                    <p class="card-text">Analyze room occupancy rates</p>
+                    <button type="button" class="btn btn-primary report-btn" data-type="occupancy">
+                        View Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Content -->
+    <div class="card">
+        <div class="card-body">
+            <div id="report-content">
+                <!-- Charts will be rendered here -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="chart-container">
+                            <canvas id="bookingsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report Table -->
+                <div class="table-responsive mt-4">
+                    <table class="table table-hover" id="reportTable">
+                        <thead>
+                            <!-- Table headers will be dynamically populated -->
+                        </thead>
+                        <tbody>
+                            <!-- Table data will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DateRangePicker
+    $('#date-range').daterangepicker({
+        startDate: moment().subtract(29, 'days'),
+        endDate: moment(),
+        ranges: {
+           'Today': [moment(), moment()],
+           'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'This Month': [moment().startOf('month'), moment().endOf('month')],
+           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    });
+
+    // Initialize Charts
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const bookingsCtx = document.getElementById('bookingsChart').getContext('2d');
+
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Revenue',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    const bookingsChart = new Chart(bookingsCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Bookings',
+                data: [],
+                backgroundColor: 'rgb(54, 162, 235)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Handle Report Generation
+    async function generateReport(type) {
+        const dateRange = $('#date-range').val();
+        const [startDate, endDate] = dateRange.split(' - ');
+
+        try {
+            const response = await fetch('/admin/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: type,
+                    startDate: startDate,
+                    endDate: endDate
+                })
+            });
+
+            const data = await response.json();
+            
+            // Update charts
+            updateCharts(data);
+            
+            // Update table
+            updateTable(data);
+            
+        } catch (error) {
+            console.error('Error generating report:', error);
+            showNotification('Failed to generate report', 'error');
+        }
+    }
+
+    function updateCharts(data) {
+        // Update Revenue Chart
+        revenueChart.data.labels = data.dates;
+        revenueChart.data.datasets[0].data = data.revenue;
+        revenueChart.update();
+
+        // Update Bookings Chart
+        bookingsChart.data.labels = data.dates;
+        bookingsChart.data.datasets[0].data = data.bookings;
+        bookingsChart.update();
+    }
+
+    function updateTable(data) {
+        const table = document.getElementById('reportTable');
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+
+        // Clear existing content
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+
+        // Add headers
+        const headerRow = document.createElement('tr');
+        Object.keys(data.table.headers).forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Add data rows
+        data.table.rows.forEach(row => {
+            const tr = document.createElement('tr');
+            Object.values(row).forEach(cell => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Event Listeners
+    document.getElementById('generate-report').addEventListener('click', function() {
+        const activeReportType = document.querySelector('.report-btn.active')?.dataset.type || 'monthly';
+        generateReport(activeReportType);
+    });
+
+    document.querySelectorAll('.report-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            document.querySelectorAll('.report-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            // Generate report
+            generateReport(this.dataset.type);
+        });
+    });
+
+    // Handle Export
+    document.querySelectorAll('.export-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const format = this.dataset.format;
+            const dateRange = $('#date-range').val();
+            const reportType = document.querySelector('.report-btn.active')?.dataset.type || 'monthly';
+
+            window.location.href = `/admin/export-report?type=${reportType}&format=${format}&dateRange=${dateRange}`;
+        });
+    });
+
+    // Generate initial report
+    generateReport('monthly');
+});
+</script>
+{% endblock %}

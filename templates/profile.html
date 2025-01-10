@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title">Profile Information</h4>
+                    <p><strong>Username:</strong> {{ current_user.username }}</p>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <!-- Upcoming Bookings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Upcoming Bookings</h4>
+                    {% if upcoming_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hotel</th>
+                                        <th>Room Type</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                        <th>Total Price</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in upcoming_bookings %}
+                                    <tr>
+                                        <td>{{ booking.hotel.name }}</td>
+                                        <td>{{ booking.room.type|title }}</td>
+                                        <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                {{ booking.status }}
+                                            </span>
+                                        </td>
+                                        <td>£{{ "%.2f"|format(booking.total_price) }}</td>
+                                        <td>
+                                            {% if booking.status != 'cancelled' %}
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" class="btn btn-sm btn-info">View</a>
+                                                    {% if booking.payment_status == 'pending' %}
+                                                        <a href="{{ url_for('payment', booking_id=booking.id) }}" class="btn btn-sm btn-warning">Pay Now</a>
+                                                    {% endif %}
+                                                    {% if booking.status == 'confirmed' %}
+                                                        <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</a>
+                                                        <a href="{{ url_for('download_receipt', booking_id=booking.id) }}" class="btn btn-sm btn-secondary">Receipt</a>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You don't have any upcoming bookings.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Past Bookings -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title">Past Bookings</h4>
+                    {% if past_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hotel</th>
+                                        <th>Room Type</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                        <th>Total Price</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in past_bookings %}
+                                    <tr>
+                                        <td>{{ booking.hotel.name }}</td>
+                                        <td>{{ booking.room.type|title }}</td>
+                                        <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                {{ booking.status }}
+                                            </span>
+                                        </td>
+                                        <td>£{{ "%.2f"|format(booking.total_price) }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" class="btn btn-sm btn-info">View</a>
+                                                {% if booking.status == 'confirmed' %}
+                                                    <a href="{{ url_for('download_receipt', booking_id=booking.id) }}" class="btn btn-sm btn-secondary">Receipt</a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You don't have any past bookings.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

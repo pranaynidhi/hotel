@@ -1,0 +1,234 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Bookings</h6>
+                            <h3>{{ total_bookings }}</h3>
+                        </div>
+                        <div class="icon text-primary">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <p class="text-muted">{{ booking_change }}% from last month</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h3>£{{ total_revenue }}</h3>
+                        </div>
+                        <div class="icon text-success">
+                            <i class="fas fa-pound-sign"></i>
+                        </div>
+                    </div>
+                    <p class="text-muted">{{ revenue_change }}% from last month</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Users</h6>
+                            <h3>{{ active_users }}</h3>
+                        </div>
+                        <div class="icon text-info">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <p class="text-muted">{{ user_change }}% from last month</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Room Occupancy</h6>
+                            <h3>{{ occupancy_rate }}%</h3>
+                        </div>
+                        <div class="icon text-warning">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                    </div>
+                    <p class="text-muted">{{ occupancy_change }}% from last month</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Revenue Overview</h5>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Room Type Distribution</h5>
+                    <div class="chart-container">
+                        <canvas id="roomTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Bookings</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Guest</th>
+                                    <th>Hotel</th>
+                                    <th>Room</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.id }}</td>
+                                    <td>{{ booking.guest_name }}</td>
+                                    <td>{{ booking.hotel_name }}</td>
+                                    <td>{{ booking.room_number }}</td>
+                                    <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ booking.status_color }}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </td>
+                                    <td>£{{ "%.2f"|format(booking.amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Hotels -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Top Performing Hotels</h5>
+                    <div class="row">
+                        {% for hotel in top_hotels %}
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ hotel.name }}</h6>
+                                    <p class="card-text">
+                                        Revenue: £{{ "%.2f"|format(hotel.revenue) }}<br>
+                                        Bookings: {{ hotel.bookings }}<br>
+                                        Occupancy: {{ hotel.occupancy }}%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ revenue_labels|tojson }},
+            datasets: [{
+                label: 'Revenue',
+                data: {{ revenue_data|tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '£' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Room Type Chart
+    const roomTypeCtx = document.getElementById('roomTypeChart').getContext('2d');
+    new Chart(roomTypeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ room_type_labels|tojson }},
+            datasets: [{
+                data: {{ room_type_data|tojson }},
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 206, 86)',
+                    'rgb(75, 192, 192)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

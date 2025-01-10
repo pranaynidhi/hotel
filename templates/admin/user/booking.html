@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Your Booking{% endblock %}
+
+{% block content %}
+<div class="booking-page">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}">{{ hotel.name }}</a></li>
+            <li class="breadcrumb-item active">Complete Booking</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Booking Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3>Booking Details</h3>
+                    <div class="booking-summary">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Hotel:</strong> {{ hotel.name }}</p>
+                                <p><strong>Room Type:</strong> {{ selected_room.type }}</p>
+                                <p><strong>Check-in:</strong> {{ check_in.strftime('%Y-%m-%d') }}</p>
+                                <p><strong>Check-out:</strong> {{ check_out.strftime('%Y-%m-%d') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Number of Nights:</strong> {{ nights }}</p>
+                                <p><strong>Guests:</strong> {{ guests }}</p>
+                                <p><strong>Room Rate:</strong> ${{ "%.2f"|format(selected_room.price) }}/night</p>
+                                <p><strong>Total Price:</strong> ${{ "%.2f"|format(total_price) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="card">
+                <div class="card-body">
+                    <h3>Payment Information</h3>
+                    <form id="payment-form" action="{{ url_for('booking_confirmation') }}" method="POST">
+                        <input type="hidden" name="hotel_id" value="{{ hotel.id }}">
+                        <input type="hidden" name="room_id" value="{{ selected_room.id }}">
+                        <input type="hidden" name="check_in" value="{{ check_in.strftime('%Y-%m-%d') }}">
+                        <input type="hidden" name="check_out" value="{{ check_out.strftime('%Y-%m-%d') }}">
+                        <input type="hidden" name="guests" value="{{ guests }}">
+                        <input type="hidden" name="total_price" value="{{ total_price }}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="card_name" class="form-label">Name on Card</label>
+                                <input type="text" class="form-control" id="card_name" name="card_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="card_number" class="form-label">Card Number</label>
+                                <input type="text" class="form-control" id="card_number" name="card_number" 
+                                       pattern="\d{16}" maxlength="16" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="expiry_month" class="form-label">Expiry Month</label>
+                                <select class="form-control" id="expiry_month" name="expiry_month" required>
+                                    {% for month in range(1, 13) %}
+                                    <option value="{{ '%02d'|format(month) }}">{{ '%02d'|format(month) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="expiry_year" class="form-label">Expiry Year</label>
+                                <select class="form-control" id="expiry_year" name="expiry_year" required>
+                                    {% for year in range(current_year, current_year + 10) %}
+                                    <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv" 
+                                       pattern="\d{3,4}" maxlength="4" required>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the terms and conditions
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Complete Booking</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Summary -->
+        <div class="col-md-4">
+            <div class="card price-summary sticky-top">
+                <div class="card-body">
+                    <h3>Price Summary</h3>
+                    <div class="price-details">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Room Rate:</span>
+                            <span>${{ "%.2f"|format(selected_room.price) }}/night</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Number of Nights:</span>
+                            <span>{{ nights }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>${{ "%.2f"|format(subtotal) }}</span>
+                        </div>
+                        {% if discount %}
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>Discount:</span>
+                            <span>-${{ "%.2f"|format(discount) }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Taxes & Fees:</span>
+                            <span>${{ "%.2f"|format(taxes) }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total:</strong>
+                            <strong>${{ "%.2f"|format(total_price) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('payment-form');
+    const cardNumber = document.getElementById('card_number');
+    const cvv = document.getElementById('cvv');
+
+    // Format card number
+    cardNumber.addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '').substring(0, 16);
+    });
+
+    // Format CVV
+    cvv.addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '').substring(0, 4);
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

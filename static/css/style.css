@@ -1,0 +1,223 @@
+/* Global Styles */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: var(--dark-color);
+}
+
+/* Navigation */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(rgba(13, 110, 253, 0.9), rgba(13, 110, 253, 0.7)),
+                url('../images/background.jpg') center/cover;
+    color: white;
+    padding: 4rem 0;
+    margin-top: -1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Search Form */
+.search-section {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    padding: 2rem;
+}
+
+.search-form .form-control {
+    border-radius: 5px;
+}
+
+/* Hotel Cards */
+.hotel-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.hotel-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.hotel-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.hotel-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Hotel Details */
+.hotel-details .carousel {
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.hotel-details .carousel-item img {
+    height: 400px;
+    object-fit: cover;
+}
+
+.booking-card.sticky-top {
+    top: 20px;
+    z-index: 100;
+}
+
+/* Amenities */
+.amenity-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--light-color);
+    border-radius: 5px;
+}
+
+/* Forms */
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Buttons */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+}
+
+/* Profile Page */
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-text {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.profile-stats h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+    color: var(--secondary-color);
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* Booking Cards */
+.booking-card {
+    transition: transform 0.3s ease;
+}
+
+.booking-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Price Summary */
+.price-summary.sticky-top {
+    top: 20px;
+}
+
+.price-details {
+    font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 0;
+    }
+
+    .hotel-details .carousel-item img {
+        height: 300px;
+    }
+
+    .booking-card.sticky-top,
+    .price-summary.sticky-top {
+        position: static;
+        margin-top: 1rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Error Pages */
+.error-page {
+    padding: 4rem 0;
+}
+
+.error-page h1 {
+    font-size: 6rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Flash Messages */
+.alert {
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.alert-dismissible .btn-close {
+    padding: 1.25rem;
+}

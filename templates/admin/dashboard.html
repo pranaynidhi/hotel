@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Hotels</h5>
+                    <p class="card-text display-4">{{ hotels|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Active Bookings</h5>
+                    <p class="card-text display-4">{{ recent_bookings|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Available Rooms</h5>
+                    <p class="card-text display-4">
+                        {% set available_rooms = namespace(count=0) %}
+                        {% for hotel in hotels %}
+                            {% for room in hotel.rooms %}
+                                {% if room.available %}
+                                    {% set available_rooms.count = available_rooms.count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {{ available_rooms.count }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <p class="card-text display-4">
+                        £{{ "%.2f"|format(recent_bookings|sum(attribute='total_price')) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Guest</th>
+                                    <th>Hotel</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.booking_id }}</td>
+                                    <td>{{ booking.user.name }}</td>
+                                    <td>{{ booking.hotel.name }}</td>
+                                    <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if booking.is_active %}success{% else %}secondary{% endif %}">
+                                            {% if booking.is_active %}Active{% else %}Completed{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>£{{ "%.2f"|format(booking.total_price) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

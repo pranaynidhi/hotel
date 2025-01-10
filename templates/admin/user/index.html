@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center py-5 mb-4">
+    <h1>Find Your Perfect Stay</h1>
+    <p class="lead">Search from thousands of hotels worldwide</p>
+</div>
+
+<div class="search-section bg-light p-4 rounded shadow-sm mb-5">
+    <form method="GET" action="{{ url_for('index') }}" class="search-form">
+        {{ form.csrf_token }}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="city" class="form-label">City</label>
+                    {{ form.city(class="form-control", placeholder="Enter city") }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="check_in" class="form-label">Check-in</label>
+                    {{ form.check_in(class="form-control", type="date") }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="check_out" class="form-label">Check-out</label>
+                    {{ form.check_out(class="form-control", type="date") }}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group">
+                    <label for="rooms" class="form-label">Rooms</label>
+                    {{ form.rooms(class="form-control") }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="room_type" class="form-label">Room Type</label>
+                    {{ form.room_type(class="form-control") }}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group">
+                    <label for="currency" class="form-label">Currency</label>
+                    {{ form.currency(class="form-control") }}
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-search"></i> Search Hotels
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="hotels-section">
+    <h2 class="mb-4">Available Hotels</h2>
+    <div class="row">
+        {% for hotel in hotels %}
+        <div class="col-md-4 mb-4">
+            <div class="card hotel-card h-100">
+                <img src="{{ hotel.images[0] if hotel.images else url_for('static', filename='images/placeholder.jpg') }}" 
+                     class="card-img-top" alt="{{ hotel.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ hotel.name }}</h5>
+                    <p class="card-text">
+                        <i class="fas fa-map-marker-alt"></i> {{ hotel.city }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="rating">
+                            {% for i in range(hotel.rating|int) %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% if hotel.rating % 1 >= 0.5 %}
+                                <i class="fas fa-star-half-alt text-warning"></i>
+                            {% endif %}
+                        </div>
+                        <a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}" 
+                           class="btn btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <p class="lead">No hotels found matching your criteria.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date as today for check-in
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('check_in').min = today;
+
+    // Update check-out minimum date when check-in changes
+    document.getElementById('check_in').addEventListener('change', function() {
+        document.getElementById('check_out').min = this.value;
+    });
+});
+</script>
+{% endblock %}

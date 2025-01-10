@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmation{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <h2 class="card-title">Booking Confirmation</h2>
+                <p class="text-success"><i class="bi bi-check-circle-fill"></i> Your booking has been confirmed!</p>
+                <h4>Booking ID: {{ booking.booking_id }}</h4>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Hotel Details</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Hotel Name:</strong></td>
+                            <td>{{ booking.room.hotel.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Address:</strong></td>
+                            <td>{{ booking.room.hotel.address }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>City:</strong></td>
+                            <td>{{ booking.room.hotel.city }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Room Details</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Room Type:</strong></td>
+                            <td>{{ booking.room.type|title }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Guests:</strong></td>
+                            <td>{{ booking.num_guests }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Room Features:</strong></td>
+                            <td>
+                                <ul class="list-unstyled mb-0">
+                                    {% for feature in booking.room.features %}
+                                    <li><i class="bi bi-check-circle-fill text-success"></i> {{ feature }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Booking Details</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Check-in Date:</strong></td>
+                            <td>{{ booking.check_in.strftime('%B %d, %Y') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Check-out Date:</strong></td>
+                            <td>{{ booking.check_out.strftime('%B %d, %Y') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Nights:</strong></td>
+                            <td>{{ (booking.check_out - booking.check_in).days }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Booking Date:</strong></td>
+                            <td>{{ booking.booking_date.strftime('%B %d, %Y') }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Price Details</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Base Price:</strong></td>
+                            <td>£{{ "%.2f"|format(booking.room.base_price) }} per night</td>
+                        </tr>
+                        {% if booking.num_guests > 1 and booking.room.type == 'double' %}
+                        <tr>
+                            <td><strong>Extra Guest Charge:</strong></td>
+                            <td>£{{ "%.2f"|format(booking.room.base_price * 0.1) }} per night</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Subtotal:</strong></td>
+                            <td>£{{ "%.2f"|format(booking.total_price / (1 - booking.advance_booking_discount)) }}</td>
+                        </tr>
+                        {% if booking.advance_booking_discount > 0 %}
+                        <tr>
+                            <td><strong>Advance Booking Discount:</strong></td>
+                            <td>-£{{ "%.2f"|format(booking.total_price * booking.advance_booking_discount / (1 - booking.advance_booking_discount)) }} ({{ (booking.advance_booking_discount * 100)|int }}%)</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="fw-bold">
+                            <td><strong>Total Price:</strong></td>
+                            <td>£{{ "%.2f"|format(booking.total_price) }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <h5>Cancellation Policy</h5>
+                <p class="mb-0">If you need to cancel your booking:</p>
+                <ul class="mb-0">
+                    <li>More than 60 days before check-in: No charge</li>
+                    <li>30-60 days before check-in: 50% of booking price (£{{ "%.2f"|format(booking.total_price * 0.5) }})</li>
+                    <li>Less than 30 days before check-in: 100% of booking price (£{{ "%.2f"|format(booking.total_price) }})</li>
+                </ul>
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Print Receipt
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="bi bi-house"></i> Return to Home
+                </a>
+                {% if booking.status == 'confirmed' %}
+                <button class="btn btn-danger" onclick="cancelBooking('{{ booking.booking_id }}')">
+                    <i class="bi bi-x-circle"></i> Cancel Booking
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cancelBooking(bookingId) {
+    if (confirm('Are you sure you want to cancel this booking? Cancellation charges may apply.')) {
+        fetch(`/cancel_booking/${bookingId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Booking cancelled successfully. ' + 
+                      (data.charge > 0 ? `Cancellation charge: £${data.charge.toFixed(2)}` : 'No cancellation charge applied.'));
+                window.location.reload();
+            } else {
+                alert('Failed to cancel booking: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+    .btn, .alert {
+        display: none;
+    }
+    body {
+        padding: 2cm;
+    }
+}
+.bi {
+    margin-right: 0.5rem;
+}
+</style>
+{% endblock %}

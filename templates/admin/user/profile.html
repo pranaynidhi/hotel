@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-circle mb-3">
+                            <span class="avatar-text">{{ current_user.username[0]|upper }}</span>
+                        </div>
+                        <h3>{{ current_user.username }}</h3>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                    </div>
+
+                    <div class="profile-stats text-center">
+                        <div class="row">
+                            <div class="col">
+                                <h4>{{ upcoming_bookings|length }}</h4>
+                                <p class="text-muted">Upcoming</p>
+                            </div>
+                            <div class="col">
+                                <h4>{{ past_bookings|length }}</h4>
+                                <p class="text-muted">Past</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Profile Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Update Profile</h4>
+                    <form method="POST" action="{{ url_for('update_profile') }}" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ current_user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ current_user.email }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Change Password Form -->
+            <div class="card">
+                <div class="card-body">
+                    <h4>Change Password</h4>
+                    <form method="POST" action="{{ url_for('change_password') }}" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" 
+                                   name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" 
+                                   name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" 
+                                   name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" 
+                               href="#upcoming" role="tab">Upcoming Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="past-tab" data-bs-toggle="tab" 
+                               href="#past" role="tab">Past Bookings</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-4" id="bookingTabsContent">
+                        <!-- Upcoming Bookings -->
+                        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+                            {% for booking in upcoming_bookings %}
+                            <div class="booking-card mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <img src="{{ booking.hotel.images[0] if booking.hotel.images else url_for('static', filename='images/placeholder.jpg') }}" 
+                                                     class="img-fluid rounded" alt="{{ booking.hotel.name }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h5>{{ booking.hotel.name }}</h5>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-calendar"></i> 
+                                                    {{ booking.check_in.strftime('%Y-%m-%d') }} to 
+                                                    {{ booking.check_out.strftime('%Y-%m-%d') }}
+                                                </p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-bed"></i> 
+                                                    {{ booking.room.type }}
+                                                </p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-user"></i> 
+                                                    {{ booking.guests }} guests
+                                                </p>
+                                                <p class="mb-0">
+                                                    <i class="fas fa-tag"></i> 
+                                                    ${{ "%.2f"|format(booking.total_price) }}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-3 text-end">
+                                                <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-outline-primary mb-2">View Details</a>
+                                                <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" 
+                                                   class="btn btn-outline-danger"
+                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                    Cancel Booking
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="text-center text-muted">No upcoming bookings</p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Past Bookings -->
+                        <div class="tab-pane fade" id="past" role="tabpanel">
+                            {% for booking in past_bookings %}
+                            <div class="booking-card mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <img src="{{ booking.hotel.images[0] if booking.hotel.images else url_for('static', filename='images/placeholder.jpg') }}" 
+                                                     class="img-fluid rounded" alt="{{ booking.hotel.name }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h5>{{ booking.hotel.name }}</h5>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-calendar"></i> 
+                                                    {{ booking.check_in.strftime('%Y-%m-%d') }} to 
+                                                    {{ booking.check_out.strftime('%Y-%m-%d') }}
+                                                </p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-bed"></i> 
+                                                    {{ booking.room.type }}
+                                                </p>
+                                                <p class="mb-1">
+                                                    <i class="fas fa-user"></i> 
+                                                    {{ booking.guests }} guests
+                                                </p>
+                                                <p class="mb-0">
+                                                    <i class="fas fa-tag"></i> 
+                                                    ${{ "%.2f"|format(booking.total_price) }}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-3 text-end">
+                                                <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-outline-primary mb-2">View Details</a>
+                                                <a href="{{ url_for('download_receipt', booking_id=booking.id) }}" 
+                                                   class="btn btn-outline-secondary">Download Receipt</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="text-center text-muted">No past bookings</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password change validation
+    const newPassword = document.getElementById('new_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const passwordForm = document.querySelector('form[action*="change_password"]');
+
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(event) {
+            if (newPassword.value !== confirmPassword.value) {
+                event.preventDefault();
+                alert("Passwords don't match!");
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

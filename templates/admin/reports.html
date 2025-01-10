@@ -1,0 +1,165 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Reports</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Sales Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Sales Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotel Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Hotel Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Hotel</th>
+                                    <th>Total Bookings</th>
+                                    <th>Revenue</th>
+                                    <th>Average Rating</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                <tr>
+                                    <td>{{ report.hotel.name }}</td>
+                                    <td>{{ report.total_bookings }}</td>
+                                    <td>£{{ "%.2f"|format(report.total_revenue) }}</td>
+                                    <td>
+                                        <div class="rating">
+                                            {% for _ in range(report.hotel.rating|int) %}
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                            {% endfor %}
+                                            {% if report.hotel.rating % 1 >= 0.5 %}
+                                            <i class="bi bi-star-half text-warning"></i>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if report.total_revenue > 5000 %}
+                                        <span class="badge bg-success">Profitable</span>
+                                        {% elif report.total_revenue > 1000 %}
+                                        <span class="badge bg-warning">Break-even</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Loss</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Customers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Total Bookings</th>
+                                    <th>Total Spent</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer, booking_count, total_spent in top_customers %}
+                                <tr>
+                                    <td>{{ customer.name }}</td>
+                                    <td>{{ booking_count }}</td>
+                                    <td>£{{ "%.2f"|format(total_spent) }}</td>
+                                    <td>
+                                        {% if total_spent > 5000 %}
+                                        <span class="badge bg-success">VIP</span>
+                                        {% elif total_spent > 1000 %}
+                                        <span class="badge bg-info">Regular</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">New</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Sales Chart
+    var ctx = document.getElementById('monthlySalesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Sales',
+                data: [
+                    {% for report in reports %}
+                    {{ report.total_revenue }},
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Monthly Sales Overview'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

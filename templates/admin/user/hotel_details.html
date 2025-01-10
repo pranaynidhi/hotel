@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="hotel-details">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Hotels</a></li>
+            <li class="breadcrumb-item active">{{ hotel.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-3">{{ hotel.name }}</h1>
+            <p class="text-muted">
+                <i class="fas fa-map-marker-alt"></i> {{ hotel.address }}
+            </p>
+
+            <!-- Hotel Images Carousel -->
+            <div id="hotelCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% for image in hotel.images %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <img src="{{ image }}" class="d-block w-100" alt="Hotel Image">
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#hotelCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#hotelCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+
+            <!-- Hotel Description -->
+            <div class="hotel-description mb-4">
+                <h2>About the Hotel</h2>
+                <p>{{ hotel.description }}</p>
+            </div>
+
+            <!-- Hotel Amenities -->
+            <div class="hotel-amenities mb-4">
+                <h2>Amenities</h2>
+                <div class="row">
+                    {% for amenity in hotel.amenities %}
+                    <div class="col-md-4 mb-2">
+                        <div class="amenity-item">
+                            <i class="fas fa-check text-success"></i> {{ amenity }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Room Types -->
+            <div class="room-types mb-4">
+                <h2>Available Rooms</h2>
+                {% for room in hotel.rooms %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h3>{{ room.type }}</h3>
+                                <p>{{ room.description }}</p>
+                                <div class="room-amenities">
+                                    {% for amenity in room.amenities %}
+                                    <span class="badge bg-light text-dark me-2">{{ amenity }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="price-info">
+                                    <p class="mb-1">Regular Price:</p>
+                                    <h4>${{ "%.2f"|format(room.price) }}/night</h4>
+                                    {% if room.peak_price %}
+                                    <p class="text-muted">Peak Season: ${{ "%.2f"|format(room.peak_price) }}/night</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Booking Form -->
+        <div class="col-md-4">
+            <div class="card booking-card sticky-top">
+                <div class="card-body">
+                    <h3>Book Your Stay</h3>
+                    <form action="{{ url_for('booking', hotel_id=hotel.id) }}" method="POST" id="booking-form">
+                        <div class="form-group mb-3">
+                            <label for="check_in">Check-in Date</label>
+                            <input type="date" class="form-control" id="check_in" name="check_in" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="check_out">Check-out Date</label>
+                            <input type="date" class="form-control" id="check_out" name="check_out" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="room_type">Room Type</label>
+                            <select class="form-control" id="room_type" name="room_id" required>
+                                {% for room in hotel.rooms %}
+                                <option value="{{ room.id }}" data-price="{{ room.price }}" data-peak-price="{{ room.peak_price }}">
+                                    {{ room.type }} - ${{ "%.2f"|format(room.price) }}/night
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="guests">Number of Guests</label>
+                            <input type="number" class="form-control" id="guests" name="guests" min="1" max="4" required>
+                        </div>
+                        <div class="price-summary mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Total Price:</span>
+                                <span id="total-price">$0.00</span>
+                            </div>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Book Now</button>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100">Login to Book</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const roomSelect = document.getElementById('room_type');
+    const totalPriceElement = document.getElementById('total-price');
+
+    // Set minimum date as today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+
+    function updateTotalPrice() {
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        
+        if (checkIn && checkOut && checkOut > checkIn) {
+            const days = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+            const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price);
+            const totalPrice = days * price;
+            totalPriceElement.textContent = `$${totalPrice.toFixed(2)}`;
+        }
+    }
+
+    checkInInput.addEventListener('change', function() {
+        checkOutInput.min = this.value;
+        updateTotalPrice();
+    });
+
+    checkOutInput.addEventListener('change', updateTotalPrice);
+    roomSelect.addEventListener('change', updateTotalPrice);
+});
+</script>
+{% endblock %}
