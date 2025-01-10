@@ -1,122 +1,139 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">Hotel Search</h1>
-    
-    <!-- Search Form -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('index') }}">
-                {{ form.csrf_token }}
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            {{ form.city.label }}
-                            {{ form.city(class="form-control") }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            {{ form.check_in.label }}
-                            {{ form.check_in(class="form-control", type="date") }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            {{ form.check_out.label }}
-                            {{ form.check_out(class="form-control", type="date") }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            {{ form.room_type.label }}
-                            {{ form.room_type(class="form-control") }}
-                        </div>
-                    </div>
-                    <div class="col-md-1">
-                        <div class="form-group">
-                            {{ form.rooms.label }}
-                            {{ form.rooms(class="form-control", min="1", max="5") }}
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            {{ form.currency.label }}
-                            {{ form.currency(class="form-control") }}
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary mt-3">Search Hotels</button>
-            </form>
-        </div>
-    </div>
+  <h1 class="mb-4">Hotel Search</h1>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <!-- Hotel Results -->
-    {% if hotels %}
+  <!-- Search Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('index') }}">
+        {{ form.csrf_token }}
         <div class="row">
-            {% for hotel in hotels %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        {% if hotel.images %}
-                            <img src="{{ hotel.images[0] }}" class="card-img-top" alt="{{ hotel.name }}" style="height: 200px; object-fit: cover;">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ hotel.name }}</h5>
-                            <p class="card-text">
-                                <i class="fas fa-map-marker-alt"></i> {{ hotel.city }}<br>
-                                {% if hotel.rating %}
-                                    <i class="fas fa-star text-warning"></i> {{ "%.1f"|format(hotel.rating) }}/5<br>
-                                {% endif %}
-                                {% if hotel.min_price %}
-                                    <strong>From {{ "%.2f"|format(hotel.min_price) }} {{ form.currency.data or 'GBP' }} per night</strong>
-                                {% endif %}
-                            </p>
-                            <a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}" class="btn btn-primary">View Details</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+          <div class="col-md-3">
+            <div class="form-group">
+              {{ form.city.label }} {{ form.city(class="form-control") }}
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              {{ form.check_in.label }} {{ form.check_in(class="form-control",
+              type="date") }}
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              {{ form.check_out.label }} {{ form.check_out(class="form-control",
+              type="date") }}
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              {{ form.room_type.label }} {{ form.room_type(class="form-control")
+              }}
+            </div>
+          </div>
+          <div class="col-md-1">
+            <div class="form-group">
+              {{ form.rooms.label }} {{ form.rooms(class="form-control",
+              min="1", max="5") }}
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              {{ form.currency.label }} {{ form.currency(class="form-control")
+              }}
+            </div>
+          </div>
         </div>
-    {% else %}
-        <div class="alert alert-info" role="alert">
-            No hotels found matching your criteria. Please try a different search.
+        <button type="submit" class="btn btn-primary mt-3">
+          Search Hotels
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div
+    class="alert alert-{{ category }} alert-dismissible fade show"
+    role="alert"
+  >
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %} {% endif %} {% endwith %}
+
+  <!-- Hotel Results -->
+  {% if hotels %}
+  <div class="row">
+    {% for hotel in hotels %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <img
+          src="{{ url_for('static', filename='images/' + hotel.name + '.jpg') }}"
+          alt="{{ hotel.name }}"
+        />
+
+        <div class="card-body">
+          <h5 class="card-title">{{ hotel.name }}</h5>
+          <p class="card-text">
+            <i class="fas fa-map-marker-alt"></i> {{ hotel.city }}<br />
+            {% if hotel.rating %}
+            <i class="fas fa-star text-warning"></i> {{
+            "%.1f"|format(hotel.rating) }}/5<br />
+            {% endif %} {% if hotel.min_price %}
+            <strong
+              >From {{ "%.2f"|format(hotel.min_price) }} {{ form.currency.data
+              or 'GBP' }} per night</strong
+            >
+            {% endif %}
+          </p>
+          <a
+            href="{{ url_for('hotel_details', hotel_id=hotel.id) }}"
+            class="btn btn-primary"
+            >View Details</a
+          >
         </div>
-    {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+    No hotels found matching your criteria. Please try a different search.
+  </div>
+  {% endif %}
 </div>
 
 <!-- Initialize date pickers -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set minimum date for check-in to today
-        var today = new Date().toISOString().split('T')[0];
-        document.getElementById('check_in').min = today;
-        
-        // Update check-out minimum date when check-in changes
-        document.getElementById('check_in').addEventListener('change', function() {
-            var checkIn = new Date(this.value);
-            var nextDay = new Date(checkIn);
-            nextDay.setDate(checkIn.getDate() + 1);
-            document.getElementById('check_out').min = nextDay.toISOString().split('T')[0];
-            
-            // If check-out is before check-in, update it
-            var checkOut = new Date(document.getElementById('check_out').value);
-            if (checkOut <= checkIn) {
-                document.getElementById('check_out').value = nextDay.toISOString().split('T')[0];
-            }
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    // Set minimum date for check-in to today
+    var today = new Date().toISOString().split("T")[0];
+    document.getElementById("check_in").min = today;
+
+    // Update check-out minimum date when check-in changes
+    document.getElementById("check_in").addEventListener("change", function () {
+      var checkIn = new Date(this.value);
+      var nextDay = new Date(checkIn);
+      nextDay.setDate(checkIn.getDate() + 1);
+      document.getElementById("check_out").min = nextDay
+        .toISOString()
+        .split("T")[0];
+
+      // If check-out is before check-in, update it
+      var checkOut = new Date(document.getElementById("check_out").value);
+      if (checkOut <= checkIn) {
+        document.getElementById("check_out").value = nextDay
+          .toISOString()
+          .split("T")[0];
+      }
     });
+  });
 </script>
 {% endblock %}
